@@ -240,3 +240,60 @@ snippet kwargs
 	**kwargs${1:,}${0}
 snippet akw
 	*args, **kwargs${1:,}${0}
+snippet apps
+	#!/usr/bin/env python
+	# -*- coding: utf-8 -*-
+	import ConfigParser
+
+
+	class ${1:ClassName}(object):
+	    def __init__(self, logger, options):
+	        self.logger = logger
+	        self.parseConfig(options)
+
+
+	    def parseConfig(self, options):
+	        cf = ConfigParser.ConfigParser()
+	        cf.read(options['conf'])
+	        count = 0
+	        for s in  cf.sections():
+	            for o in cf.options(s):
+	                o =o.strip().lower()
+	                count += 1
+	                key = "%s_%s" % (s, o)
+	                options[key] = cf.get(s,o).strip()
+	        self.logger.info("Configs(%d options) loaded..." % count)
+
+
+	    def process(self, options):
+		    pass
+
+
+	if __name__ == "__main__":
+	    import time
+	    import logging
+	    from argparse import ArgumentParser
+
+	    parser = ArgumentParser(description='${2:AppName}')
+	    parser.add_argument("--version", action="version", version="$2 0.1")
+	    parser.add_argument("--conf", action="store", dest="conf", default="$2.conf", help="Config file")
+
+	    args = parser.parse_args()
+	    options = vars(args)
+
+	    logger = logging.getLogger()
+	    formatter = logging.Formatter('[%(asctime)s][*%(levelname)s*][%(filename)s:%(lineno)d|%(funcName)s] - %(message)s', '%Y%m%d-%H:%M:%S')
+	    file_handler = logging.FileHandler('log-$2.txt', 'w')
+	    file_handler.setFormatter(formatter)
+	    logger.addHandler(file_handler)
+
+	    stream_handler = logging.StreamHandler()
+	    stream_handler.setFormatter(formatter)
+	    logger.addHandler(stream_handler)
+	    logger.setLevel(logging.INFO)
+
+	    allStartTP = time.time()
+	    appInst = $1(logger, options)
+	    appInst.process(options)
+	    allEndTP = time.time()
+	    logger.info("Operation Finished [Time Cost:%0.3f Seconds]" % float(allEndTP - allStartTP))
